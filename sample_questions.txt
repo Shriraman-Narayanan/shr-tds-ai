@@ -1,0 +1,10 @@
+What is exploratory data analysis and why is it important?
+How do you handle missing values in a dataset?
+What are the key principles of data visualization?
+Explain the difference between supervised and unsupervised learning.
+What statistical tests should I use for my data analysis?
+How do I determine if my data is normally distributed?
+What are the best practices for data cleaning?
+How do I choose the right chart type for my data?
+What is the importance of feature engineering in machine learning?
+How do you validate the results of your data analysis?

@@ -1,0 +1,120 @@
+# TDS Data Analyst Agent - promptfoo Configuration
+# This configuration works with your deployed Vercel app
+
+description: "TDS Data Analyst Agent Evaluation on Vercel"
+
+# Test prompts for evaluation
+prompts:
+  - "{{question}}"
+  - "Please analyze and explain: {{question}}"
+
+# Provider configuration - update YOUR_VERCEL_URL after deployment
+providers:
+  - id: "https://YOUR_VERCEL_URL.vercel.app/api/simple"
+    config:
+      method: "POST"
+      headers:
+        "Content-Type": "application/json"
+      body:
+        question: "{{prompt}}"
+      # Enhanced error handling for robust evaluation
+      transformResponse: |
+        console.log('Raw response received:', typeof data, data);
+
+        try {
+          // Handle empty or null responses
+          if (!data || data === '') {
+            return 'Empty response from server - check deployment and API key';
+          }
+
+          // Handle string responses (might be JSON)
+          if (typeof data === 'string') {
+            // Check for HTML error pages
+            if (data.trim().startsWith('<')) {
+              return 'Server returned HTML error page - check Vercel deployment logs';
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              return parsed.answer || parsed.result || parsed.output || parsed.message || data;
+            } catch (parseError) {
+              return data; // Return as-is if not JSON
+            }
+          }
+
+          // Handle object responses
+          if (typeof data === 'object') {
+            return data.answer || data.result || data.output || data.message || JSON.stringify(data);
+          }
+
+          return data;
+        } catch (error) {
+          console.error('Transform error:', error);
+          return `Transform error: ${error.message} - Raw data: ${data}`;
+        }
+
+      # Increased timeout for API processing
+      timeoutMs: 45000
+
+# Test cases for evaluation
+tests:
+  # Basic connectivity test
+  - vars:
+      question: "Hello, what is your purpose?"
+    assert:
+      - type: contains-any
+        value: ["TDS", "data", "analysis", "analyst", "science"]
+      - type: not-contains
+        value: ["Error", "error", "undefined", "null"]
+      - type: javascript
+        value: "output && output.length > 20"
+
+  # Data science knowledge test
+  - vars:
+      question: "What is exploratory data analysis?"
+    assert:
+      - type: contains-any
+        value: ["EDA", "exploratory", "patterns", "visualization", "summary"]
+      - type: javascript
+        value: "output && output.length > 50"
+
+  # Statistical concepts test
+  - vars:
+      question: "Explain the difference between mean and median"
+    assert:
+      - type: contains-any
+        value: ["mean", "median", "average", "middle", "outliers"]
+      - type: llm-rubric
+        value: "Response correctly explains the difference between mean and median"
+
+  # Data visualization test
+  - vars:
+      question: "What are the best practices for data visualization?"
+    assert:
+      - type: contains-any
+        value: ["chart", "graph", "visualization", "clarity", "audience"]
+      - type: javascript
+        value: "!output.toLowerCase().includes('error')"
+
+  # Tool-specific question
+  - vars:
+      question: "How do I handle missing values in a dataset?"
+    assert:
+      - type: contains-any
+        value: ["missing", "null", "imputation", "remove", "strategy"]
+      - type: llm-rubric
+        value: "Response provides practical advice for handling missing data"
+        provider: "openai:gpt-3.5-turbo"
+
+# Default assertions for all tests
+defaultTest:
+  assert:
+    - type: not-contains
+      value: ["Error:", "undefined", "null", "failed", "timeout"]
+    - type: javascript
+      value: "output && typeof output === 'string' && output.length > 10"
+    - type: latency
+      threshold: 30000
+
+# Output configuration
+outputPath: "./promptfoo_results"
