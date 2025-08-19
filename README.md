@@ -1,4 +1,4 @@
-# TDS Data Analyst Agent
+# TDS Data Analyst Agent 
 
 An AI-powered data analysis agent built for the Tools in Data Science (TDS) course. This application allows users to upload questions and datasets to receive intelligent analysis and insights.
 
